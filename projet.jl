@@ -15,7 +15,6 @@ include("lecture.jl")
 model = Model(Cbc.Optimizer)
 
 #Hypoyhèse : la fonction est définie dans lecture.jl et initialisée ... ?
-Data = donnees(N, R, O, RS)
 Data.P = 5 #ou 2 ou autre valeur de notre choix
 Data.Capa = []
 for p in 1:Data.P
@@ -29,12 +28,12 @@ end
 Data.FO = []
 Data.SO = []
 
-for o in 1:15
+for o in 1:(Data.O/2)+1
     push!(Data.FO, o)
 end
 
 for o in 1:Data.O
-    if !(o in Data.FO)
+    if ! in(o,Data.FO)
         push!(Data.SO, o)
     end
 end
@@ -44,9 +43,9 @@ end
 # Par exemple: donnees.N, donnees.R, donnees.O, etc.
 
 # Variables de décision
-@variable(model, x[1:Data.R, 1:Data.P], Bin)  # Affectation des racks aux préparateurs
-@variable(model, y[1:Data.O, 1:Data.P], Bin)  # Affectation des commandes aux préparateurs
-@variable(model, 0 <= v[1:Data.O] <= 1)
+@variable(model, x[1:Data.O, 1:Data.P], Bin)  # Affectation des racks aux préparateurs
+@variable(model, y[1:Data.R, 1:Data.P], Bin)  # Affectation des commandes aux préparateurs
+@variable(model, 0 <= v[Data.SO] <= 1)
 @variable(model, 0 <= u[1:Data.R] <= 1)
 
 
@@ -73,13 +72,14 @@ for p in 1:Data.P
 end
 
 #5
-for r in 1:Data.RS
-    for o in 1:Data.O
-        @constraint(model, sum(Data.S[i, r] * y[r, p] for i in 1:Data.N for p in 1:Data.P) >= sum(Data.Q[i, o] * x[o, p] for i in 1:Data.N for p in 1:Data.P))
-    end
+for p in 1:Data.P, i in 1:Data.N
+    lhs = sum(Data.S[i][r] * y[r, p] for r in 1:Data.R )
+    rhs = sum(Data.Q[i][o] * x[o, p] for o in 1:Data.O )
+    @constraint(model, lhs >= rhs)
+end
 
     # Fonction objectif
-    @objective(model, Min, sum(length(Data.SO) + 1 * u[r] for r in 1:Data.RS) - sum(v[o] for o in Data.SO))
+    @objective(model, Min, sum((length(Data.SO) + 1) * u[r] for r in 1:Data.R) - sum(v[o] for o in Data.SO))
 
     # Résoudre le modèle
     optimize!(model)
@@ -88,9 +88,8 @@ for r in 1:Data.RS
     println("Solution optimale:")
     for p in 1:Data.P
         for r in 1:Data.R
-            if value(x[r, p]) > 0.5
+            if value(y[r, p]) > 0.5
                 println("Rack $r assigné au préparateur $p")
             end
         end
     end
-end
