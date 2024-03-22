@@ -14,6 +14,32 @@ include("lecture.jl")
 # Initialiser le modèle JuMP avec le solveur CBC
 model = Model(Cbc.Optimizer)
 
+#Hypoyhèse : la fonction est définie dans lecture.jl et initialisée ... ?
+Data = donnees(N, R, O, RS)
+Data.P = 5 #ou 2 ou autre valeur de notre choix
+Data.Capa = []
+for p in 1:Data.P
+    push!(Data.Capa, 12) #encore ici, on peut remplacer 12 par la valeur de notre choix
+end
+
+for p in 1:Data.P
+    println("Capacité du préparateur $p: ", Data.Capa[p])
+end
+
+Data.FO = []
+Data.SO = []
+
+for o in 1:15
+    push!(Data.FO, o)
+end
+
+for o in 1:Data.O
+    if !(o in Data.FO)
+        push!(Data.SO, o)
+    end
+end
+
+
 # Supposons que les données soient maintenant dans la variable `donnees`
 # Par exemple: donnees.N, donnees.R, donnees.O, etc.
 
@@ -37,33 +63,34 @@ for o in Data.SO
 end
 
 #3
-for r in 1:Data.RS
+for r in 1:Data.R
     @constraint(model, sum(y[r, p] for p in 1:Data.P) == u[r])
 end
 
 #4
-for p in Data.SO
+for p in 1:Data.P
     @constraint(model, sum(x[o, p] for o in 1:Data.O) <= Data.Capa[p])
 end
 
 #5
-for r in 1:Data.RS for o in 1:Data.O
-    @constraint(model, sum(s[i, r]*y[r, p] for i in 1:Data.N for p in 1:Data.P) >= sum(q[i, o]*x[o, p] for i in 1:Data.N for p in 1:Data.P))
-end
+for r in 1:Data.RS
+    for o in 1:Data.O
+        @constraint(model, sum(Data.S[i, r] * y[r, p] for i in 1:Data.N for p in 1:Data.P) >= sum(Data.Q[i, o] * x[o, p] for i in 1:Data.N for p in 1:Data.P))
+    end
 
-# Fonction objectif
-@objective(model, Min, sum(length(Data.SO)+1*u[r] for r in 1:Data.RS ) - sum(v[o] for o in Data.SO))
+    # Fonction objectif
+    @objective(model, Min, sum(length(Data.SO) + 1 * u[r] for r in 1:Data.RS) - sum(v[o] for o in Data.SO))
 
-# Résoudre le modèle
-optimize!(model)
-println(model)
-# Afficher les résultats
-println("Solution optimale:")
-for p in 1:Data.P
-    for r in 1:Data.R
-        if value(x[r,p]) > 0.5
-            println("Rack $r assigné au préparateur $p")
+    # Résoudre le modèle
+    optimize!(model)
+    println(model)
+    # Afficher les résultats
+    println("Solution optimale:")
+    for p in 1:Data.P
+        for r in 1:Data.R
+            if value(x[r, p]) > 0.5
+                println("Rack $r assigné au préparateur $p")
+            end
         end
     end
-end
 end
