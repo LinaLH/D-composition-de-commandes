@@ -27,9 +27,14 @@ end
 
 Data.FO = []
 Data.SO = []
-
-for o in 1:(Data.O/2)+1
-    push!(Data.FO, o)
+if (Data.O % 2 == 0)
+    for o in 1:(Data.O/2)
+        push!(Data.FO, o)
+    end
+else 
+    for o in 1:(Data.O/2)+1
+        push!(Data.FO, o)
+    end
 end
 
 for o in 1:Data.O
@@ -85,11 +90,19 @@ end
     optimize!(model)
     println(model)
     # Afficher les résultats
-    println("Solution optimale:")
+    println("Solution optimale: Rack")
     for p in 1:Data.P
         for r in 1:Data.R
             if value(y[r, p]) > 0.5
                 println("Rack $r assigné au préparateur $p")
+            end
+        end
+    end
+    println("Solution optimale: Order")
+    for p in 1:Data.P
+        for o in 1:Data.O
+            if value(x[o, p]) > 0.5
+                println("Order $o assigné au préparateur $p")
             end
         end
     end
