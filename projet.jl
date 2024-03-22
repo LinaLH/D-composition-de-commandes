@@ -33,12 +33,12 @@ end
 
 #2
 for o in Data.SO
-    @constraint(model, sum(x[o, p] for p in 1:Data.P) == v0)
+    @constraint(model, sum(x[o, p] for p in 1:Data.P) == v[o])
 end
 
 #3
-for r in Data.RS
-    @constraint(model, sum(y[r, p] for p in 1:Data.P) == ur)
+for r in 1:Data.RS
+    @constraint(model, sum(y[r, p] for p in 1:Data.P) == u[r])
 end
 
 #4
@@ -47,12 +47,12 @@ for p in Data.SO
 end
 
 #5
-for r in Data.RS for o in 1:Data.O
+for r in 1:Data.RS for o in 1:Data.O
     @constraint(model, sum(s[i, r]*y[r, p] for i in 1:Data.N for p in 1:Data.P) <= sum(q[i, o]*x[o, p] for i in 1:Data.N for p in 1:Data.P))
 end
 
 # Fonction objectif
-@objective(model, Min, sum(abs(S)+1*ur for i in 1:Data.R) - sum(v[o] for o in Data.SO))
+@objective(model, Min, sum(length(Data.SO)+1*u[r] for r in 1:Data.RS for i in 1:Data.R) - sum(v[o] for o in Data.SO))
 
 # Résoudre le modèle
 optimize!(model)
@@ -65,4 +65,5 @@ for p in 1:Data.P
             println("Rack $r assigné au préparateur $p")
         end
     end
+end
 end
