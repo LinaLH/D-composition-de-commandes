@@ -48,15 +48,15 @@ end
 
 #5
 for r in 1:Data.RS for o in 1:Data.O
-    @constraint(model, sum(s[i, r]*y[r, p] for i in 1:Data.N for p in 1:Data.P) <= sum(q[i, o]*x[o, p] for i in 1:Data.N for p in 1:Data.P))
+    @constraint(model, sum(s[i, r]*y[r, p] for i in 1:Data.N for p in 1:Data.P) >= sum(q[i, o]*x[o, p] for i in 1:Data.N for p in 1:Data.P))
 end
 
 # Fonction objectif
-@objective(model, Min, sum(length(Data.SO)+1*u[r] for r in 1:Data.RS for i in 1:Data.R) - sum(v[o] for o in Data.SO))
+@objective(model, Min, sum(length(Data.SO)+1*u[r] for r in 1:Data.RS ) - sum(v[o] for o in Data.SO))
 
 # Résoudre le modèle
 optimize!(model)
-
+println(model)
 # Afficher les résultats
 println("Solution optimale:")
 for p in 1:Data.P
