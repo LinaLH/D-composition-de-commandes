@@ -13,9 +13,9 @@ include("lecture.jl")
 
 # Initialiser le modèle JuMP avec le solveur CBC
 model = Model(Cbc.Optimizer)
-
+set_time_limit_sec(model, 180)
 #Hypoyhèse : la fonction est définie dans lecture.jl et initialisée ... ?
-Data.P = 5 #ou 2 ou autre valeur de notre choix
+Data.P = 2 #ou 2 ou autre valeur de notre choix
 Data.Capa = []
 for p in 1:Data.P
     push!(Data.Capa, 12) #encore ici, on peut remplacer 12 par la valeur de notre choix
@@ -88,21 +88,27 @@ end
 
     # Résoudre le modèle
     optimize!(model)
-    println(model)
+    # println(model)
     # Afficher les résultats
-    println("Solution optimale: Rack")
-    for p in 1:Data.P
-        for r in 1:Data.R
-            if value(y[r, p]) > 0.5
-                println("Rack $r assigné au préparateur $p")
-            end
-        end
+    # println("Solution optimale: Rack")
+    # for p in 1:Data.P
+    #     for r in 1:Data.R
+    #         if value(y[r, p]) > 0.5
+    #             println("Rack $r assigné au préparateur $p")
+    #         end
+    #     end
+    # end
+    # println("Solution optimale: Order")
+    # for p in 1:Data.P
+    #     for o in 1:Data.O
+    #         if value(x[o, p]) > 0.5
+    #             println("Order $o assigné au préparateur $p")
+    #         end
+    #     end
+    # end
+    for  p in 1:Data.P, o in 1:Data.O
+        println("x[$o,$p] = ", value(x[o, p]))
     end
-    println("Solution optimale: Order")
-    for p in 1:Data.P
-        for o in 1:Data.O
-            if value(x[o, p]) > 0.5
-                println("Order $o assigné au préparateur $p")
-            end
-        end
+    for r in 1:Data.R, p in 1:Data.P
+        println("y[$r,$p] = ", value(y[r,p]))
     end
