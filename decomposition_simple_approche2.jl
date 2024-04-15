@@ -84,43 +84,13 @@ end
 valeur_initiale = 0.11
 alpha1 = initialiser_multiplicateurs(Data.P, Data.N, valeur_initiale)
 alpha2 = initialiser_multiplicateurs(Data.P, Data.N, valeur_initiale) 
-step_size = 1
-max_iterations = 20# Nombre maximum d'itérations pour le sous gradient
-max_iterations2 = 5# Nombre maximum d'itération pour le probleme maitre 
-for k in 1:max_iterations2
-    model_maitre = Model(GLPK.Optimizer)
-    @variable(model_maitre, 0<=alpha[1:Data.P, 1:Data.N])
-    # Boucle principale de la méthode de sous-gradient
-    for iteration in 1:max_iterations
-        # Résoudre le sous-problème avec le multiplicateur actuel
-        global x_sol, obj_value_x= f1(alpha1)
-        global y_sol , obj_value_y= f2(alpha2)
-        for p in 1:Data.P, i in 1:Data.N
-            rhs = sum(Data.Q[i][o] * x_sol[o, p] for o in 1:Data.O )
-            lhs = sum(Data.S[i][r] * y_sol[r, p] for r in 1:Data.R )
-            # Mise à jour du multiplicateur de Lagrange
-            alpha1[p,i] = alpha1[p,i]+ step_size * rhs
-            alpha2[p,i] = alpha2[p,i]- step_size * lhs 
-        end
-        # Optionnel: Ajuster la taille de pas
-        global step_size =step_size * 1/iteration # Décroissance exponentielle de la taille de pas
-    end
-    @objective(model_maitre,Min,obj_value_x + obj_value_y + sum(sum(alpha[p,i]*(sum(Data.Q[i][o] * x_sol[o, p] for o in 1:Data.O)-sum(Data.S[i][r] * y_sol[r, p] for r in 1:Data.R)) for i in 1:Data.N) for p in 1:Data.P))
-    optimize!(model_maitre)
-    # Vérification du statut de la solution
-    if termination_status(model_maitre) != MOI.OPTIMAL
-        break  # Sortir de la boucle si le problème n'est pas résolu
-    else
-        global object = objective_value(model_maitre)
-    end
-end
-# model_maitre = Model(GLPK.Optimizer)
-# @variable(model_maitre, 0<=alpha[1:Data.P, 1:Data.N])
-# x_sol, obj_value_x= f1(alpha1)
-# y_sol , obj_value_y= f2(alpha1)
-# @objective(model_maitre,Min,obj_value_x + obj_value_y + sum(sum(alpha[p,i]*(sum(Data.Q[i][o] * x_sol[o, p] for o in 1:Data.O)-sum(Data.S[i][r] * y_sol[r, p] for r in 1:Data.R)) for i in 1:Data.N) for p in 1:Data.P))
-# optimize!(model_maitre)
-# object = objective_value(model_maitre)
+model_maitre = Model(GLPK.Optimizer)
+@variable(model_maitre, 0<=alpha[1:Data.P, 1:Data.N])
+x_sol, obj_value_x= f1(alpha1)
+y_sol , obj_value_y= f2(alpha1)
+@objective(model_maitre,Min,obj_value_x + obj_value_y + sum(sum(alpha[p,i]*(sum(Data.Q[i][o] * x_sol[o, p] for o in 1:Data.O)-sum(Data.S[i][r] * y_sol[r, p] for r in 1:Data.R)) for i in 1:Data.N) for p in 1:Data.P))
+optimize!(model_maitre)
+object = objective_value(model_maitre)
 println("================================================================================================================================")
 println("prbm maitre final = ", object)
 
