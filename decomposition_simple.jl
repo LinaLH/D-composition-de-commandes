@@ -109,7 +109,7 @@ for k in 1:max_iterations2
     @objective(model_maitre,Min,obj_value_x + obj_value_y + sum(sum(alpha[p,i]*(sum(Data.Q[i][o] * x_sol[o, p] for o in 1:Data.O)-sum(Data.S[i][r] * y_sol[r, p] for r in 1:Data.R)) for i in 1:Data.N) for p in 1:Data.P))
     optimize!(model_maitre)
     println(model_maitre)
-    println("prbm maitre", objective_value(model_maitre))
+    println("prbm maitre = ", objective_value(model_maitre))
 end
 
 
