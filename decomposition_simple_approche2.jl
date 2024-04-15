@@ -39,6 +39,9 @@ function initialiser_multiplicateurs(P, N, valeur_initiale)
     alpha = fill(valeur_initiale, P, N)
     return alpha
 end
+function f(x,y)
+    return sum((length(Data.SO) + 1) * sum(y[r,p] for p in 1:Data.P) for r in 1:Data.R) - sum(sum(x[o,p] for p in 1:Data.P) for o in Data.SO)
+end
 
 function f1(alpha)
     model_1 = Model(GLPK.Optimizer)
@@ -100,3 +103,4 @@ end
 for r in 1:Data.R, p in 1:Data.P
     println("y[$r,$p] = ", y_sol[r,p])
 end
+println("Valeur optimale = ", f(x_sol, y_sol))
