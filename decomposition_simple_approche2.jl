@@ -63,8 +63,10 @@ function f1(alpha)
         # Fonction objectif sous probleme 1
     @objective(model_1, Min, sum(sum(x[o,p]*sum(alpha[p,i]*Data.Q[i][o] for i in 1:Data.N) for p in 1:Data.P) for o in 1:Data.O) - sum(v[o] for o in Data.SO))
 
-    # Résoudre le modèle 1
-    optimize!(model_1)
+
+    # Résolution et mesure du temps
+    cpu_time = @elapsed optimize!(model_1)
+    println("Temps de résolution du sous-problème 1: $(cpu_time) secondes")
     x_value = [ value(x[o,p]) for o in 1:Data.O, p in 1:Data.P ]
     return x_value,  objective_value(model_1)
 end
@@ -79,8 +81,9 @@ function f2(alpha)
         # Fonction objectif
     @objective(model_2, Min, sum((length(Data.SO) + 1) * u[r] for r in 1:Data.R) + sum(sum(y[r,p] * sum(-alpha[p,i]*Data.S[i][r] for i in 1:Data.N) for p in 1:Data.P) for r in 1:Data.R))
 
-    # Résoudre le modèle
-    optimize!(model_2)
+    # Résolution et mesure du temps
+    cpu_time = @elapsed optimize!(model_2)
+    println("Temps de résolution du sous-problème 2: $(cpu_time) secondes")
     y_value = [value(y[r,p]) for r in 1:Data.R , p in 1:Data.P]
     return y_value ,objective_value(model_2)
 end
@@ -92,7 +95,10 @@ model_maitre = Model(GLPK.Optimizer)
 x_sol, obj_value_x= f1(alpha1)
 y_sol , obj_value_y= f2(alpha1)
 @objective(model_maitre,Min,obj_value_x + obj_value_y + sum(sum(alpha[p,i]*(sum(Data.Q[i][o] * x_sol[o, p] for o in 1:Data.O)-sum(Data.S[i][r] * y_sol[r, p] for r in 1:Data.R)) for i in 1:Data.N) for p in 1:Data.P))
-optimize!(model_maitre)
+# Résolution et mesure du temps
+cpu_time = @elapsed optimize!(model_maitre)
+println("================================================================================================================================")
+println("Temps de résolution du problème maître: $(cpu_time) secondes")
 object = objective_value(model_maitre)
 println("================================================================================================================================")
 println("prbm maitre final = ", object)
