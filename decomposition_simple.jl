@@ -1,0 +1,119 @@
+using JuMP
+using Cbc
+#Pkg.add("Cbc")
+
+# Assurez-vous que le fichier lecture.jl est dans le même répertoire
+include("lecture.jl")
+# Initialiser nos 2 modèles JuMP avec le solveur CBC pour résoudres les 2 sous problemes
+
+#Hypoyhèse : la fonction est définie dans lecture.jl et initialisée ... ?
+Data.P = 2 #ou 2 ou autre valeur de notre choix
+Data.Capa = []
+for p in 1:Data.P
+    push!(Data.Capa, 12) #encore ici, on peut remplacer 12 par la valeur de notre choix
+end
+
+for p in 1:Data.P
+    println("Capacité du préparateur $p: ", Data.Capa[p])
+end
+
+Data.FO = []
+Data.SO = []
+if (Data.O % 2 == 0)
+    for o in 1:(Data.O/2)
+        push!(Data.FO, o)
+    end
+else 
+    for o in 1:(Data.O/2)+1
+        push!(Data.FO, o)
+    end
+end
+
+for o in 1:Data.O
+    if ! in(o,Data.FO)
+        push!(Data.SO, o)
+    end
+end
+# Fonction pour initialiser les multiplicateurs de Lagrange
+function initialiser_multiplicateurs(P, N, valeur_initiale)
+    alpha = fill(valeur_initiale, P, N)
+    return alpha
+end
+
+function f1(alpha)
+    model_1 = Model(Cbc.Optimizer)
+    @variable(model_1, x[1:Data.O, 1:Data.P], Bin)  # Affectation des racks aux préparateurs
+    @variable(model_1, 0 <= v[Data.SO] <= 1)
+    #1
+    for o in Data.FO
+        @constraint(model_1, sum(x[o, p] for p in 1:Data.P) == 1)
+    end
+
+    #2
+    for o in Data.SO
+        @constraint(model_1, sum(x[o, p] for p in 1:Data.P) == v[o])
+    end
+    #4
+    for p in 1:Data.P
+        @constraint(model_1, sum(x[o, p] for o in 1:Data.O) <= Data.Capa[p])
+    end
+        # Fonction objectif sous probleme 1
+    @objective(model_1, Min, sum(sum(x[o,p]*sum(alpha[p,i]*Data.Q[i][o] for i in 1:Data.N) for p in 1:Data.P) for o in 1:Data.O) - sum(v[o] for o in Data.SO))
+
+    # Résoudre le modèle 1
+    optimize!(model_1)
+    x_value = [ value(x[o,p]) for o in 1:Data.O, p in 1:Data.P ]
+    return x_value,  objective_value(model_1)
+end
+function f2(alpha)
+    model_2 = Model(Cbc.Optimizer)
+    @variable(model_2, y[1:Data.R, 1:Data.P], Bin)  # Affectation des commandes aux préparateurs
+    @variable(model_2, 0 <= u[1:Data.R] <= 1)
+        #3
+    for r in 1:Data.R
+        @constraint(model_2, sum(y[r, p] for p in 1:Data.P) == u[r])
+    end
+        # Fonction objectif
+    @objective(model_2, Min, sum((length(Data.SO) + 1) * u[r] for r in 1:Data.R) - sum(sum(y[r,p] * sum(alpha[p,i]*Data.S[i][r] for i in 1:Data.N) for p in 1:Data.P) for r in 1:Data.R))
+
+    # Résoudre le modèle
+    optimize!(model_2)
+    y_value = [value(y[r,p]) for r in 1:Data.R , p in 1:Data.P]
+    return y_value ,objective_value(model_2)
+end
+valeur_initiale = 0.1
+alpha1 = initialiser_multiplicateurs(Data.P, Data.N, valeur_initiale)
+alpha2 = initialiser_multiplicateurs(Data.P, Data.N, valeur_initiale) 
+step_size = 1
+max_iterations = 20# Nombre maximum d'itérations
+max_iterations2 = 5 # Nombre maximum d'itération
+for k in 1:max_iterations2
+    model_maitre = Model(Cbc.Optimizer)
+    @variable(model_maitre, 0<=alpha[1:Data.P, 1:Data.N])
+    # Boucle principale de la méthode de sous-gradient
+    for iteration in 1:max_iterations
+        # Résoudre le sous-problème avec le multiplicateur actuel
+        global x_sol, obj_value_x= f1(alpha1)
+        global y_sol , obj_value_y= f2(alpha2)
+        for p in 1:Data.P, i in 1:Data.N
+            rhs = sum(Data.Q[i][o] * x_sol[o, p] for o in 1:Data.O )
+            lhs = sum(Data.S[i][r] * y_sol[r, p] for r in 1:Data.R )
+            # Mise à jour du multiplicateur de Lagrange
+            alpha1[p,i] = alpha1[p,i]+ step_size * rhs
+            alpha2[p,i] = alpha2[p,i]- step_size * lhs 
+        end
+        # Optionnel: Ajuster la taille de pas
+        global step_size =step_size * 1/iteration # Décroissance exponentielle de la taille de pas
+    end
+    println("================================================================================================================================")
+    @objective(model_maitre,Min,obj_value_x + obj_value_y + sum(sum(alpha[p,i]*(sum(Data.Q[i][o] * x_sol[o, p] for o in 1:Data.O)-sum(Data.S[i][r] * y_sol[r, p] for r in 1:Data.R)) for i in 1:Data.N) for p in 1:Data.P))
+    optimize!(model_maitre)
+    println(model_maitre)
+    println("prbm maitre", objective_value(model_maitre))
+end
+
+
+
+for  p in 1:Data.P, o in 1:Data.O
+    println("x[$o,$p] = ", x_sol[o,p])
+end 
