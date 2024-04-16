@@ -2,10 +2,10 @@
 mutable struct donnees
   N::Int # nbre de produits
   R::Int # nbre racks
-  O::Int # nbre d'ordre
+  O::Int # nbre de commandes (orders)
   RS::Int # nbre shelves dans un rack
   S::Vector{Vector{Int}} # matrice produits - racks
-  Q::Vector{Vector{Int}} # matrice produits - ordres
+  Q::Vector{Vector{Int}} # matrice produits - orders
   P::Int # nbre de pickers
   Capa::Vector{Int} # capacite des pickers : Cp
   FO::Vector{Int} # first orders prioritaires
@@ -63,7 +63,7 @@ lines = readlines("instance_N100_R100_O100_RS25.txt")
 #lines = readlines("Data_test_N5_R4_O3_RS2.txt")
 #lines = readlines("Data_test_N5_R3_O3_RS5.txt")
 #lines = readlines("Data_test_N5_R2_O3_RS2.txt")
-#lines = readlines("Data_test_N7_R5_O8_RS5.txt") # ici 5/8 des ordres peuvent etre satisfaits
+#lines = readlines("Data_test_N7_R5_O8_RS5.txt") # ici 5/8 des orders peuvent etre satisfaits
 #lines = readlines("Data_test_N7_R5_O6_RS7.txt")
 #lines = readlines("Data_test_N10_R10_O10_RS7.txt") 
 #lines = readlines("Data_test_N12_R12_O12_RS8.txt")
@@ -87,7 +87,7 @@ println("nbre racks R ", R)
 line = lines[3]
 line_decompose = split(line)
 O = parse(Int64, line_decompose[2])
-println("nbre ordres O ", O)
+println("nbre orders O ", O)
 
 line = lines[5]
 line_decompose = split(line)
@@ -111,14 +111,14 @@ for r in 1:R # parcours les racks
   end
 
 end
-for o in 1:O # parcours les ordres
+for o in 1:O # parcourt les orders
   num_line = (7 + R + 2) + o
   global line = lines[num_line]
   global line_decompose = split(line)
 
-  nbre_prod_inside_ordre = parse(Int64, line_decompose[2])
-  print("\n ordre ", o, " ", nbre_prod_inside_ordre, "\n")
-  for i in 1:nbre_prod_inside_ordre
+  nbre_prod_inside_order = parse(Int64, line_decompose[2])
+  print("\n order ", o, " ", nbre_prod_inside_order, "\n")
+  for i in 1:nbre_prod_inside_order
     num_prod = parse(Int64, line_decompose[2+i])
     # Attention numero de produit vont de 0 - N-1
     Data.Q[num_prod+1][o] += 1
