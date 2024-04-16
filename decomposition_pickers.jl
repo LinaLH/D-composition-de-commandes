@@ -51,8 +51,8 @@ function solve_picker_subproblem(p, alpha, beta)
                           sum(v[o] * (1 - alpha[o]) for o in Data.SO) + sum(alpha[o] for o in Data.FO) - 
                           sum(x[o] * alpha[o] for o in 1:Data.O))
 
-    optimize!(model)
-
+    cpu_time = @elapsed optimize!(model)
+    println("CPU time pour le sous problème $p : $cpu_time")
     return value.(x), value.(y), objective_value(model)
 end
 
@@ -72,12 +72,14 @@ function solve_master_problem(P, x_solutions, y_solutions, alphas, betas)
     # Objectif du problème maître
     @objective(master_model, Min, sum(lambda[p] * (alphas[p] + betas[p]) for p in 1:P))
 
-    optimize!(master_model)
+    cpu_time = @elapsed optimize!(master_model)
 
     println("Valeur optimale du problème maître: ", objective_value(master_model))
     for p in 1:P
         println("Poids du sous-problème pour le préparateur $p: ", value(lambda[p]))
     end
+    println("================================")
+    println(" CPU time = $cpu_time")
 end
 
 alphas = [0.1 for o in 1:Data.O]  # Multiplicateurs pour les racks

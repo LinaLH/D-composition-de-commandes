@@ -53,7 +53,7 @@ println("je suis dans la fonction lecture des donnees 0")
 #lines = readlines("test_data.txt") # le fichier contenant les donnees
 #lines = readlines("test_data_1.txt")
 #lines = readlines("instance_N100_R50_O50_RS25.txt")
-#lines = readlines("instance_N100_R100_O100_RS25")
+lines = readlines("instance_N100_R100_O100_RS25.txt")
 #lines = readlines("instance_N100_R100_O150_RS25")
 #lines = readlines("instance_N200_R50_O50_RS25")
 #lines = readlines("instance_N200_R100_O100_RS25")
@@ -61,7 +61,7 @@ println("je suis dans la fonction lecture des donnees 0")
 
 #lines = readlines("Data_test.txt")
 #lines = readlines("Data_test_N5_R4_O3_RS2.txt")
-lines = readlines("Data_test_N5_R3_O3_RS5.txt")
+#lines = readlines("Data_test_N5_R3_O3_RS5.txt")
 #lines = readlines("Data_test_N5_R2_O3_RS2.txt")
 #lines = readlines("Data_test_N7_R5_O8_RS5.txt") # ici 5/8 des ordres peuvent etre satisfaits
 #lines = readlines("Data_test_N7_R5_O6_RS7.txt")
